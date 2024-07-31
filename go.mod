@@ -1,4 +1,4 @@
-module gitverse.ru/alexrastr/monster
+module github.com/alexrastr/monster
 
 go 1.21
 
