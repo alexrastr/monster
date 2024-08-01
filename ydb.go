@@ -75,9 +75,10 @@ func (client *YDBClient) GetUserClick(telegramID uint64) (uint64, error) {
 		table.CommitTx(),
 	)
 
-	var click uint64
+	click := uint64(0)
 
 	err := client.db.Table().Do(client.ctx, func(ctx context.Context, s table.Session) error {
+
 		var res result.Result
 
 		query := `
@@ -112,8 +113,46 @@ func (client *YDBClient) GetUserClick(telegramID uint64) (uint64, error) {
 		return res.Err()
 	})
 	if err != nil {
-		return 0, err
+		return click, err
 	}
 
 	return click, nil
+}
+
+// SeetUserClick устанавливает количество кликов пользователя по его telegram_id
+func (client *YDBClient) SeetUserClick(telegramID uint64, click uint64) error {
+	if client.db == nil {
+		return fmt.Errorf("database connection is not open")
+	}
+
+	writeTx := table.TxControl(
+		table.BeginTx(
+			table.WithSerializableReadWrite(),
+		),
+		table.CommitTx(),
+	)
+
+	err := client.db.Table().Do(client.ctx, func(ctx context.Context, s table.Session) error {
+
+		query := `
+		DECLARE $click AS Uint64;
+		DECLARE $telegram_id AS Uint64;
+		UPDATE users SET click = $click WHERE telegram_id = $telegram_id;
+		`
+
+		_, _, err := s.Execute(
+			ctx,
+			writeTx,
+			query,
+			table.NewQueryParameters(
+				table.ValueParam("$click", types.Uint64Value(click)),            // Подстановка параметра
+				table.ValueParam("$telegram_id", types.Uint64Value(telegramID)), // Подстановка параметра
+			),
+		)
+
+		return err
+	},
+	)
+
+	return err
 }

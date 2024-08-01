@@ -78,3 +78,38 @@ func TestGetUser(t *testing.T) {
 
 	t.Logf(string(strconv.Itoa(int(click))))
 }
+
+func TestSetUser(t *testing.T) {
+	loadEnv(t)
+
+	ctx := context.Background()
+	dsn := os.Getenv("DSN")
+	keyPath := os.Getenv("KEY_PATH")
+
+	client := NewYDBClient(
+		ctx,
+		dsn,
+		keyPath,
+	)
+
+	err := client.Open()
+
+	if err != nil {
+		t.Errorf("Expected nil error, got: %v", err)
+	}
+
+	defer func() {
+		err := client.Close()
+		if err != nil {
+			t.Errorf("Expected nil error, got: %v", err)
+		}
+	}()
+
+	err = client.SeetUserClick(540969473, 7744)
+
+	if err != nil {
+		t.Errorf("Expected nil error, got: %v", err)
+	}
+
+	t.Logf("add")
+}
